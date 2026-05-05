@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MultiRecarga PRO+</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0052D4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #0052D4, #4364F7, #6FB1FC);
+            --dark-blue: #002d72;
+            --light-blue: #e3f2fd;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f1c40f;
+            --text-main: #2c3e50;
+            --bg-body: #f4f7f6;
+            --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease;
+        }
+
+        .splash-logo {
+            width: 150px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .splash-text {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .splash-text h1 {
+            font-size: 24px;
+            color: var(--dark-blue);
+            letter-spacing: 2px;
+        }
+
+        .splash-dev {
+            position: absolute;
+            bottom: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* Login Screen */
+        #login-screen {
+            display: none;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background: var(--primary-gradient);
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .login-card img {
+            width: 100px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #4364F7;
+            box-shadow: 0 0 8px rgba(67, 100, 247, 0.2);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Main App Layout */
+        #main-app {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-brand img {
+            width: 40px;
+        }
+
+        .header-brand h2 {
+            font-size: 18px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .user-greeting {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Content Sections */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px 100px 20px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        .stat-card i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #4364F7;
+        }
+
+        .stat-card h3 {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .stat-card p {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+        }
+
+        /* Forms and Tables */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-primary { background: var(--primary-gradient); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #f8f9fa;
+            color: #888;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #e8f8f0; color: #2ecc71; }
+        .badge-danger { background: #fdeaea; color: #e74c3c; }
+
+        /* Bottom Navigation */
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 10px;
+            gap: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-item.active {
+            color: #4364F7;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            background: white;
+            width: 100%;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive Fixes */
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            th:nth-child(3), td:nth-child(3) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img id="splash-logo-img" class="splash-logo" alt="Logo MultiRecarga">
+        <div class="splash-text">
+            <h1>MULTIRECARGA</h1>
+            <p>Sempre com você</p>
+        </div>
+        <div class="splash-dev">Desenvolvedor: Alex AP</div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-card">
+            <img id="login-logo-img" alt="Logo" style="width: 80px;">
+            <h2 style="margin-bottom: 20px; color: var(--dark-blue);">Acesso Restrito</h2>
+            <div class="form-group">
+                <label>Utilizador</label>
+                <input type="text" id="login-user" placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="login-pass" placeholder="****">
+            </div>
+            <button class="btn-login" onclick="handleLogin()">ENTRAR</button>
+            <p id="login-error" style="color: var(--danger); font-size: 12px; margin-top: 10px; display: none;">Credenciais inválidas!</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app">
+        <header>
+            <div class="header-brand">
+                <img id="header-logo-img" alt="Logo" style="width: 30px;">
+                <h2>MultiRecarga PRO+</h2>
+            </div>
+            <div class="user-greeting" id="user-greeting">Olá, Admin</div>
+        </header>
+
+        <main>
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h3>Vendas</h3>
+                        <p id="stat-sales">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-wallet"></i>
+                        <h3>Total</h3>
+                        <p id="stat-revenue">0.00 KZ</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Lucro</h3>
+                        <p id="stat-profit">0.00 KZ</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-box"></i>
+                        <h3>Stock Baixo</h3>
+                        <p id="stat-low-stock">0</p>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h4 style="margin-bottom: 15px;">Desempenho de Vendas</h4>
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Vendas Section -->
+            <section id="vendas" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Nova Venda</h3>
+                    </div>
+                    <div class="form-group">
+                        <label>Produto</label>
+                        <select id="venda-produto" onchange="updateVendaPrice()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade</label>
+                        <input type="number" id="venda-qtd" value="1" min="1" oninput="updateVendaPrice()">
+                    </div>
+                    <div style="margin-bottom: 20px; font-weight: 600; font-size: 18px;">
+                        Total: <span id="venda-total" style="color: var(--dark-blue);">0.00 KZ</span>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 15px;" onclick="processarVenda()">
+                        <i class="fas fa-check"></i> FINALIZAR VENDA
+                    </button>
+                </div>
+            </section>
+
+            <!-- Stock Section -->
+            <section id="stock" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Inventário</h3>
+                        <button class="btn btn-success" onclick="openModal('modal-produto')">
+                            <i class="fas fa-plus"></i> NOVO
+                        </button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="table-stock">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Qtd</th>
+                                    <th>Preço</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Histórico Section -->
+            <section id="historico" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Histórico de Vendas</h3>
+                        <button class="btn btn-danger" onclick="limparHistorico()">
+                            <i class="fas fa-trash"></i> LIMPAR
+                        </button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="table-historico">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Produto</th>
+                                    <th>Qtd</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configurações Section -->
+            <section id="config" class="section">
+                <div class="card">
+                    <h3>Gestão de Utilizadores</h3>
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px; justify-content: center;" onclick="openModal('modal-user')">
+                            <i class="fas fa-user-plus"></i> NOVO UTILIZADOR
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Dados e Relatórios</h3>
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="btn btn-warning" style="justify-content: center;" onclick="exportarRelatorio()">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-primary" style="justify-content: center;" onclick="exportData()">
+                            <i class="fas fa-download"></i> BACKUP
+                        </button>
+                        <button class="btn btn-primary" style="justify-content: center; grid-column: span 2;" onclick="document.getElementById('import-file').click()">
+                            <i class="fas fa-upload"></i> RESTAURAR DADOS
+                        </button>
+                        <input type="file" id="import-file" style="display: none;" onchange="importData(this)">
+                    </div>
+                </div>
+                <div class="card">
+                    <button class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="confirmLogout()">
+                        <i class="fas fa-sign-out-alt"></i> SAIR DO SISTEMA
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchSection('dashboard', this)">
+                <i class="fas fa-th-large"></i>
+                <span>Início</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('vendas', this)">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Vendas</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('stock', this)">
+                <i class="fas fa-box"></i>
+                <span>Stock</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('historico', this)">
+                <i class="fas fa-history"></i>
+                <span>Histórico</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('config', this)">
+                <i class="fas fa-cog"></i>
+                <span>Ajustes</span>
+            </div>
+        </nav>
+
+        <footer>
+            Desenvolvedor: Alex AP
+        </footer>
+    </div>
+
+    <!-- Modais -->
+    <div id="modal-produto" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Novo Produto</h3>
+            <div class="form-group" style="margin-top: 20px;">
+                <label>Nome do Produto</label>
+                <input type="text" id="prod-nome">
+            </div>
+            <div class="form-group">
+                <label>Quantidade Inicial</label>
+                <input type="number" id="prod-qtd">
+            </div>
+            <div class="form-group">
+                <label>Preço Compra (KZ)</label>
+                <input type="number" step="0.01" id="prod-p-compra">
+            </div>
+            <div class="form-group">
+                <label>Preço Venda (KZ)</label>
+                <input type="number" step="0.01" id="prod-p-venda">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="salvarProduto()">SALVAR</button>
+                <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="closeModal('modal-produto')">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-user" class="modal">
+        <div class="modal-content">
+            <h3>Novo Utilizador</h3>
+            <div class="form-group" style="margin-top: 20px;">
+                <label>Nome de Utilizador</label>
+                <input type="text" id="new-user">
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="new-pass">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="salvarUtilizador()">CRIAR</button>
+                <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="closeModal('modal-user')">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inserir Base64 dinamicamente usando fetch para contornar limites de string no código inline
+        // Como o Base64 é estático, vou colocar uma string placeholder que será substituída no servidor, ou usar um método mais seguro.
+        // Aqui vou usar a técnica de carregar o ficheiro txt se possível, mas como é um PWA offline, vou colocar o base64 diretamente (versão small).
+        
+        let LOGO_BASE64 = "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膊";
+
+        let state = {
+            currentUser: null,
+            users: JSON.parse(localStorage.getItem('mr_users')) || [{user: 'admin', pass: '0000'}],
+            products: JSON.parse(localStorage.getItem('mr_products')) || [],
+            sales: JSON.parse(localStorage.getItem('mr_sales')) || [],
+            editingProductId: null
+        };
+
+        let salesChart = null;
+
+        // Inicialização Segura
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Tenta carregar o base64 do ficheiro local gerado
+                const response = await fetch('logo_base64.txt');
+                if(response.ok) {
+                    LOGO_BASE64 = await response.text();
+                    const logoSrc = `data:image/png;base64,${LOGO_BASE64}`;
+                    document.getElementById('splash-logo-img').src = logoSrc;
+                    document.getElementById('login-logo-img').src = logoSrc;
+                    document.getElementById('header-logo-img').src = logoSrc;
+                }
+            } catch(e) {
+                console.log("Erro ao carregar logo, usando fallback text.");
+            }
+
+            // Simular Splash Screen
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    document.getElementById('login-screen').style.display = 'flex';
+                }, 800);
+            }, 3000);
+
+            // Interceptar botão voltar do Android para não fechar a app abruptamente
+            window.history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function(event) {
+                if (state.currentUser) {
+                    window.history.pushState(null, null, window.location.href); // Bloqueia voltar
+                    confirmLogout();
+                }
+            });
+        });
+
+        // Funções de Autenticação
+        function handleLogin() {
+            const u = document.getElementById('login-user').value;
+            const p = document.getElementById('login-pass').value;
+            const userMatch = state.users.find(user => user.user === u && user.pass === p);
+
+            if (userMatch) {
+                state.currentUser = u;
+                document.getElementById('user-greeting').innerText = `Olá, ${u}`;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                initDashboard();
+                updateProductSelect();
+            } else {
+                const err = document.getElementById('login-error');
+                err.style.display = 'block';
+                setTimeout(() => err.style.display = 'none', 3000);
+            }
+        }
+
+        function confirmLogout() {
+            if (confirm("Deseja realmente sair do sistema MultiRecarga PRO+?")) {
+                state.currentUser = null;
+                document.getElementById('main-app').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('login-user').value = '';
+                document.getElementById('login-pass').value = '';
+                switchSection('dashboard', document.querySelector('.nav-item'));
+            }
+        }
+
+        // Navegação Segura
+        function switchSection(id, element) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+
+            if (id === 'dashboard') initDashboard();
+            if (id === 'stock') renderStock();
+            if (id === 'historico') renderHistorico();
+            if (id === 'vendas') updateProductSelect();
+        }
+
+        // Módulo de Dashboard
+        function initDashboard() {
+            const totalSales = state.sales.length;
+            const revenue = state.sales.reduce((acc, s) => acc + s.total, 0);
+            const profit = state.sales.reduce((acc, s) => acc + (s.total - (s.pCompra * s.qtd)), 0);
+            const lowStock = state.products.filter(p => p.qtd <= 5).length;
+
+            document.getElementById('stat-sales').innerText = totalSales;
+            document.getElementById('stat-revenue').innerText = revenue.toFixed(2) + ' KZ';
+            document.getElementById('stat-profit').innerText = profit.toFixed(2) + ' KZ';
+            document.getElementById('stat-low-stock').innerText = lowStock;
+
+            renderChart();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (salesChart) salesChart.destroy();
+
+            const last7Days = [...Array(7)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toLocaleDateString();
+            }).reverse();
+
+            const data = last7Days.map(date => {
+                return state.sales
+                    .filter(s => new Date(s.timestamp).toLocaleDateString() === date)
+                    .reduce((acc, s) => acc + s.total, 0);
+            });
+
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last7Days,
+                    datasets: [{
+                        label: 'Vendas (KZ)',
+                        data: data,
+                        borderColor: '#4364F7',
+                        backgroundColor: 'rgba(67, 100, 247, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Módulo de Stock
+        function openModal(id, prodId = null) {
+            document.getElementById(id).style.display = 'flex';
+            if (id === 'modal-produto') {
+                if (prodId !== null) {
+                    const p = state.products.find(x => x.id === prodId);
+                    state.editingProductId = prodId;
+                    document.getElementById('modal-title').innerText = 'Editar Produto';
+                    document.getElementById('prod-nome').value = p.nome;
+                    document.getElementById('prod-qtd').value = p.qtd;
+                    document.getElementById('prod-p-compra').value = p.pCompra;
+                    document.getElementById('prod-p-venda').value = p.pVenda;
+                } else {
+                    state.editingProductId = null;
+                    document.getElementById('modal-title').innerText = 'Novo Produto';
+                    document.getElementById('prod-nome').value = '';
+                    document.getElementById('prod-qtd').value = '';
+                    document.getElementById('prod-p-compra').value = '';
+                    document.getElementById('prod-p-venda').value = '';
+                }
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function salvarProduto() {
+            const nome = document.getElementById('prod-nome').value;
+            const qtd = parseInt(document.getElementById('prod-qtd').value);
+            const pCompra = parseFloat(document.getElementById('prod-p-compra').value);
+            const pVenda = parseFloat(document.getElementById('prod-p-venda').value);
+
+            if (!nome || isNaN(qtd) || isNaN(pCompra) || isNaN(pVenda)) return alert("Por favor, preencha todos os campos corretamente.");
+            if (qtd < 0 || pCompra < 0 || pVenda < 0) return alert("Valores não podem ser negativos.");
+
+            if (state.editingProductId !== null) {
+                const idx = state.products.findIndex(p => p.id === state.editingProductId);
+                state.products[idx] = { id: state.editingProductId, nome, qtd, pCompra, pVenda };
+            } else {
+                state.products.push({ id: Date.now(), nome, qtd, pCompra, pVenda });
+            }
+
+            saveAndRefresh();
+            closeModal('modal-produto');
+        }
+
+        function removerProduto(id) {
+            if (confirm("Tem a certeza que deseja remover este produto?")) {
+                state.products = state.products.filter(p => p.id !== id);
+                saveAndRefresh();
+            }
+        }
+
+        function renderStock() {
+            const tbody = document.querySelector('#table-stock tbody');
+            tbody.innerHTML = '';
+            state.products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.nome}</td>
+                    <td><span class="badge ${p.qtd <= 5 ? 'badge-danger' : 'badge-success'}">${p.qtd}</span></td>
+                    <td>${p.pVenda.toFixed(2)} KZ</td>
+                    <td>
+                        <i class="fas fa-edit" style="color: var(--warning); margin-right: 15px; cursor: pointer; font-size: 16px;" onclick="openModal('modal-produto', ${p.id})"></i>
+                        <i class="fas fa-trash" style="color: var(--danger); cursor: pointer; font-size: 16px;" onclick="removerProduto(${p.id})"></i>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Módulo de Vendas
+        function updateProductSelect() {
+            const select = document.getElementById('venda-produto');
+            select.innerHTML = '<option value="">Selecione um produto...</option>';
+            state.products.forEach(p => {
+                if (p.qtd > 0) {
+                    select.innerHTML += `<option value="${p.id}">${p.nome} (${p.qtd} em stock)</option>`;
+                }
+            });
+            updateVendaPrice();
+        }
+
+        function updateVendaPrice() {
+            const id = document.getElementById('venda-produto').value;
+            const qtd = parseInt(document.getElementById('venda-qtd').value) || 0;
+            const p = state.products.find(x => x.id == id);
+            const total = p ? p.pVenda * qtd : 0;
+            document.getElementById('venda-total').innerText = total.toFixed(2) + ' KZ';
+        }
+
+        function processarVenda() {
+            const id = document.getElementById('venda-produto').value;
+            const qtd = parseInt(document.getElementById('venda-qtd').value);
+            const p = state.products.find(x => x.id == id);
+
+            if (!p) return alert("Selecione um produto primeiro.");
+            if (isNaN(qtd) || qtd <= 0) return alert("Quantidade inválida.");
+            if (qtd > p.qtd) return alert("Erro: Stock insuficiente para esta venda!");
+
+            const venda = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                prodId: p.id,
+                prodNome: p.nome,
+                qtd: qtd,
+                pVenda: p.pVenda,
+                pCompra: p.pCompra,
+                total: p.pVenda * qtd
+            };
+
+            state.sales.unshift(venda);
+            p.qtd -= qtd;
+
+            saveAndRefresh();
+            alert("Venda registada com sucesso!");
+            document.getElementById('venda-qtd').value = 1;
+            updateProductSelect();
+        }
+
+        // Módulo de Histórico
+        function renderHistorico() {
+            const tbody = document.querySelector('#table-historico tbody');
+            tbody.innerHTML = '';
+            state.sales.forEach(s => {
+                const tr = document.createElement('tr');
+                const data = new Date(s.timestamp).toLocaleString();
+                tr.innerHTML = `
+                    <td style="font-size: 12px;">${data}</td>
+                    <td>${s.prodNome}</td>
+                    <td>${s.qtd}</td>
+                    <td style="font-weight: 600;">${s.total.toFixed(2)} KZ</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function limparHistorico() {
+            if (confirm("ATENÇÃO: Deseja apagar todo o histórico de vendas? Esta ação não pode ser desfeita.")) {
+                state.sales = [];
+                saveAndRefresh();
+            }
+        }
+
+        // Configurações e Dados
+        function salvarUtilizador() {
+            const user = document.getElementById('new-user').value;
+            const pass = document.getElementById('new-pass').value;
+            if (user && pass) {
+                state.users.push({user, pass});
+                localStorage.setItem('mr_users', JSON.stringify(state.users));
+                alert("Novo utilizador criado com sucesso!");
+                closeModal('modal-user');
+                document.getElementById('new-user').value = '';
+                document.getElementById('new-pass').value = '';
+            } else {
+                alert("Preencha utilizador e senha.");
+            }
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('mr_products', JSON.stringify(state.products));
+            localStorage.setItem('mr_sales', JSON.stringify(state.sales));
+            if (document.getElementById('dashboard').classList.contains('active')) initDashboard();
+            if (document.getElementById('stock').classList.contains('active')) renderStock();
+            if (document.getElementById('historico').classList.contains('active')) renderHistorico();
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `multirecarga_backup_${new Date().getTime()}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.products && imported.sales) {
+                        state.products = imported.products;
+                        state.sales = imported.sales;
+                        if(imported.users) state.users = imported.users;
+                        saveAndRefresh();
+                        alert("Dados restaurados com sucesso!");
+                    } else {
+                        alert("Ficheiro de backup inválido.");
+                    }
+                } catch (err) {
+                    alert("Erro ao ler o ficheiro.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        async function exportarRelatorio() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text("Relatório MultiRecarga PRO+", 14, 22);
+                doc.setFontSize(10);
+                doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 30);
+
+                // Tabela de Stock
+                doc.setFontSize(14);
+                doc.text("Estado do Stock", 14, 45);
+                const stockData = state.products.map(p => [p.nome, p.qtd, p.pVenda.toFixed(2) + " KZ"]);
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Produto', 'Qtd', 'Preço Venda']],
+                    body: stockData
+                });
+
+                // Resumo Financeiro
+                const revenue = state.sales.reduce((acc, s) => acc + s.total, 0);
+                const profit = state.sales.reduce((acc, s) => acc + (s.total - (s.pCompra * s.qtd)), 0);
+                const finalY = doc.lastAutoTable.finalY + 15;
+                
+                doc.text("Resumo Financeiro", 14, finalY);
+                doc.setFontSize(12);
+                doc.text(`Total de Vendas: ${state.sales.length}`, 14, finalY + 10);
+                doc.text(`Receita Total: ${revenue.toFixed(2)} KZ`, 14, finalY + 20);
+                doc.text(`Lucro Total Estimado: ${profit.toFixed(2)} KZ`, 14, finalY + 30);
+
+                doc.save(`relatorio_multirecarga_${new Date().getTime()}.pdf`);
+            } catch(e) {
+                alert("Erro ao gerar PDF. Verifique a sua ligação à internet para carregar a biblioteca de PDF.");
+            }
+        }
+    </script>
+</body>
+</html>
